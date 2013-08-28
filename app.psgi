@@ -4,6 +4,8 @@ use warnings;
 use Plack::Request;
 use Digest::SHA1 qw(sha1_hex);
 
+my $output_directory = $ENV{URLSHOT_STORAGE_DIRECTORY} or die;
+
 sub {
     my $env = shift;
     my $req = Plack::Request->new($env);
@@ -11,7 +13,7 @@ sub {
 
     return $req->new_response(404)->finalize unless $url;
 
-    my $file = "storage/" . sha1_hex($url) . ".png";
+    my $file = $output_directory . "/" . sha1_hex($url) . ".png";
 
     unless (-f $file) {
         my $exit_status = system("phantomjs", "rasterize.js", $url, $file);
