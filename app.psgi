@@ -5,6 +5,7 @@ use Plack::Request;
 use Digest::SHA1 qw(sha1_hex);
 
 my $output_directory = $ENV{URLSHOT_STORAGE_DIRECTORY} or die;
+my $APP_HOME = $ENV{APP_HOME} or die;
 
 sub {
     my $env = shift;
@@ -13,10 +14,12 @@ sub {
 
     return $req->new_response(404)->finalize unless $url;
 
-    my $file = $output_directory . "/" . sha1_hex($url) . ".png";
+    my $basename = sha1_hex($url) . ".png";
+    my $file = $output_directory . "/" . $basename;
+
 
     unless (-f $file) {
-        my $exit_status = system("phantomjs", "rasterize.js", $url, $file);
+        my $exit_status = system("phantomjs", "${APP_HOME}/rasterize.js", $url, $file);
 
         if ($exit_status != 0 || !(-f $file)) {
             return $req->new_response(404)->finalize;
@@ -24,6 +27,6 @@ sub {
     }
 
     my $res = $req->new_response(200);
-    $res->headers([ 'X-Accel-Redirect' => "/$file" ]);
+    $res->headers([ 'X-Accel-Redirect' => "/storage/$basename" ]);
     $res->finalize;
 }
